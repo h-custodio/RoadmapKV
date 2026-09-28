@@ -63,7 +63,7 @@ func handleConnection(conn net.Conn) {
 				break
 			}
 
-			command.execute(string(result))
+			command.execute(result)
 			// shifts the data buffer forward
 			data = data[bytesConsumed:]
 		}
