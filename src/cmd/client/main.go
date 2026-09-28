@@ -1,7 +1,7 @@
 package main
 
-import "RoadmapKV/src/client"
+import "RoadmapKV/src/clientserver"
 
 func main() {
-	client.ConnectServer()
+	clientserver.ConnectServer()
 }
