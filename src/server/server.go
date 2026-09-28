@@ -2,8 +2,11 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
+
+	"RoadmapKV/src/command"
 )
 
 func CreateServer() {
@@ -34,22 +37,35 @@ func handleConnection(conn net.Conn) {
 	// clean up and close the resource when this function returns
 	defer conn.Close()
 
-	// gets bytes coming from client
-	// command := parse(conn.Read)
-
 	// buffer for byte stream
-	buffer := make([]byte, 1024)
+	var data []byte
 
-	incomingSize, err := conn.Read(buffer)
-	if err != nil {
-		log.Println("Error reading from conncection:", err)
-		return
+	for {
+		streamBuffer := make([]byte, 1024)
+		incomingSize, err := conn.Read(streamBuffer)
+		if err != nil {
+			if err == io.EOF {
+				log.Println("Client disconnected")
+			} else {
+				log.Println("Error reading from connection:", err)
+			}
+			return
+		}
+
+		// convert buffer slice bytes into string
+		data = append(data, streamBuffer[:incomingSize]...)
+
+		// originally not within a sub loop
+		// allows multiple commands to be processed within the same read cycle
+		for {
+			result, complete, bytesConsumed := command.Parse(data)
+			if !complete {
+				break
+			}
+
+			command.execute(string(result))
+			// shifts the data buffer forward
+			data = data[bytesConsumed:]
+		}
 	}
-
-	// convert slice bytes into string
-	message := string(buffer[:incomingSize])
-
-	// for testing
-	log.Println("Received: ", message)
-
 }
