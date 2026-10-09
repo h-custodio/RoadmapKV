@@ -5,13 +5,13 @@ import (
 	"os"
 )
 
-type Result struct {
-	status       string
-	isAppendable bool
-	value        *[]byte
+type CmdResultResult struct {
+	Status       string
+	IsAppendable bool
+	Value        *[]byte
 }
 
-func Execute(s *storage.Store, command string, args [][]byte) Result {
+func Execute(s *storage.Store, command string, args [][]byte) CmdResultResult {
 	switch command {
 	case "SET":
 		return set(s, args)
@@ -23,64 +23,64 @@ func Execute(s *storage.Store, command string, args [][]byte) Result {
 		return del(s, string(args[0]))
 
 	case "PING":
-		return Result{
-			status:       "PONG",
-			isAppendable: false,
-			value:        nil,
+		return CmdResultResult{
+			Status:       "PONG",
+			IsAppendable: false,
+			Value:        nil,
 		}
 
 	case "QUIT":
 		return quit()
 
 	default:
-		return Result{
-			status:       "command unknown",
-			isAppendable: false,
-			value:        nil,
+		return CmdResultResult{
+			Status:       "command unknown",
+			IsAppendable: false,
+			Value:        nil,
 		}
 	}
 }
 
-func set(s *storage.Store, args [][]byte) Result {
+func set(s *storage.Store, args [][]byte) CmdResultResult {
 	if len(args) != 2 {
-		return Result{
-			status:       "not valid",
-			isAppendable: false,
-			value:        nil,
+		return CmdResultResult{
+			Status:       "not valid",
+			IsAppendable: false,
+			Value:        nil,
 		}
 	}
 
 	s.Set(string(args[0]), args[1])
-	return Result{
-		status:       "OK",
-		isAppendable: true,
-		value:        nil,
+	return CmdResultResult{
+		Status:       "OK",
+		IsAppendable: true,
+		Value:        nil,
 	}
 }
 
-func get(s *storage.Store, key string) Result {
-	val := s.Get(key)
-	return Result{
-		status:       "OK",
-		isAppendable: false,
-		value:        &val,
+func get(s *storage.Store, key string) CmdResultResult {
+	value := s.Get(key)
+	return CmdResultResult{
+		Status:       "OK",
+		IsAppendable: false,
+		Value:        &value,
 	}
 }
 
-func del(s *storage.Store, key string) Result {
+func del(s *storage.Store, key string) CmdResultResult {
 	s.Delete(key)
-	return Result{
-		status:       "OK",
-		isAppendable: true,
-		value:        nil,
+	return CmdResultResult{
+		Status:       "OK",
+		IsAppendable: true,
+		Value:        nil,
 	}
 }
 
-func quit() Result {
+func quit() CmdResultResult {
 	os.Exit(0)
-	return Result{
-		status:       "Quiting...",
-		isAppendable: false,
-		value:        nil,
+	return CmdResultResult{
+		Status:       "Quiting...",
+		IsAppendable: false,
+		Value:        nil,
 	}
 }

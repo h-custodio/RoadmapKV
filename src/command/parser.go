@@ -1,6 +1,13 @@
 package command
 
-func Parse(data []byte) ([][]byte, bool, int) {
+type ParserResult struct {
+	Line          [][]byte
+	IsComplete    bool
+	BytesConsumed int
+	InPound       bool
+}
+
+func Parse(data []byte) ParserResult {
 	// the bytes to return for a full line/command
 	// commands are separated by newline
 	var line [][]byte
@@ -9,16 +16,37 @@ func Parse(data []byte) ([][]byte, bool, int) {
 	var argument []byte
 	// amount of bytes consumed
 	bytesConsumed := 0
-	// quotes allow space in value (ex. value: "hello world")
+	// '#' char allow space in value (ex. #hello world# --> value: hello world)
+	inPound := false
 
 	for _, char := range data {
-		if char == '\n' {
-			line = append(line, argument)
+		if char == '#' && !inPound {
 			bytesConsumed++
-			return line, true, bytesConsumed
+			inPound = true
 
-		} else if char == ' ' {
-			line = append(line, argument)
+		} else if char == '#' && inPound {
+			bytesConsumed++
+			inPound = false
+
+		} else if !inPound && char == '\n' {
+			// create a copy of arguments because slice point to underlying array
+			// doing this avoids pointing to overwritten argument
+			argCopy := append([]byte(nil), argument...)
+			line = append(line, argCopy)
+			bytesConsumed++
+
+			return ParserResult{
+				Line:          line,
+				IsComplete:    true,
+				BytesConsumed: bytesConsumed,
+				InPound:       inPound,
+			}
+
+		} else if !inPound && char == ' ' {
+			// create a copy of arguments because slice point to underlying array
+			// doing this avoids pointing to overwritten argument
+			argCopy := append([]byte(nil), argument...)
+			line = append(line, argCopy)
 			argument = nil
 			bytesConsumed++
 
@@ -26,8 +54,12 @@ func Parse(data []byte) ([][]byte, bool, int) {
 			argument = append(argument, char)
 			bytesConsumed++
 		}
-
 	}
 
-	return nil, false, 0
+	return ParserResult{
+		Line:          line,
+		IsComplete:    false,
+		BytesConsumed: bytesConsumed,
+		InPound:       inPound,
+	}
 }

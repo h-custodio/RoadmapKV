@@ -59,14 +59,15 @@ func handleConnection(conn net.Conn, s *storage.Store) {
 		// originally not within a sub loop
 		// consume as many complete commands as are currently buffered within a read cycle
 		for {
-			result, complete, bytesConsumed := command.Parse(data)
-			if !complete {
+			res := command.Parse(data)
+			if !res.IsComplete {
 				break
 			}
 
-			command.Execute(s, string(result[0]), result[1:])
+			command.Execute(s, string(res.Line[0]), res.Line[1:])
 			// shifts the data buffer forward
-			data = data[bytesConsumed:]
+			// the state
+			data = data[res.BytesConsumed:]
 		}
 	}
 }
