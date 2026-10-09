@@ -25,9 +25,3 @@ func (s *Store) Get(key string) []byte {
 func (s *Store) Delete(key string) {
 	delete(s.store, key)
 }
-
-// for explicitness and convenience
-func (s *Store) Exists(key string) bool {
-	_, exist := s.store[key]
-	return exist
-}

@@ -9,6 +9,7 @@ func Parse(data []byte) ([][]byte, bool, int) {
 	var argument []byte
 	// amount of bytes consumed
 	bytesConsumed := 0
+	// quotes allow space in value (ex. value: "hello world")
 
 	for _, char := range data {
 		if char == '\n' {

@@ -7,9 +7,10 @@ import (
 	"net"
 
 	"RoadmapKV/src/command"
+	"RoadmapKV/src/storage"
 )
 
-func CreateServer() {
+func CreateServer(s *storage.Store) {
 	// listen for incoming TCP connections on port 8080
 	ln, err := net.Listen("tcp", ":8080")
 	if err != nil {
@@ -29,11 +30,11 @@ func CreateServer() {
 		}
 
 		// handle connection concurrently with goroutine
-		go handleConnection(conn)
+		go handleConnection(conn, s)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, s *storage.Store) {
 	// clean up and close the resource when this function returns
 	defer conn.Close()
 
@@ -56,14 +57,14 @@ func handleConnection(conn net.Conn) {
 		data = append(data, streamBuffer[:incomingSize]...)
 
 		// originally not within a sub loop
-		// allows multiple commands to be processed within the same read cycle
+		// consume as many complete commands as are currently buffered within a read cycle
 		for {
 			result, complete, bytesConsumed := command.Parse(data)
 			if !complete {
 				break
 			}
 
-			command.execute(result)
+			command.Execute(s, string(result[0]), result[1:])
 			// shifts the data buffer forward
 			data = data[bytesConsumed:]
 		}
