@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
-	s := storage.Store{}
-	clientserver.CreateServer(&s)
+	// NewStore() returns pointer to the store
+	s := storage.NewStore()
+	clientserver.CreateServer(s)
 }
