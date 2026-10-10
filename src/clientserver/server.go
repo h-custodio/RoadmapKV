@@ -41,6 +41,8 @@ func handleConnection(conn net.Conn, s *storage.Store) {
 	// buffer for byte stream
 	var data []byte
 
+	// CONSIDER: using bufio for handing TCP stream instead
+	// this version might struggle at scale because of frequent allocatioms
 	for {
 		streamBuffer := make([]byte, 1024)
 		incomingSize, err := conn.Read(streamBuffer)
@@ -56,18 +58,29 @@ func handleConnection(conn net.Conn, s *storage.Store) {
 		// convert buffer slice bytes into string
 		data = append(data, streamBuffer[:incomingSize]...)
 
+		// check if buffer gets too big before parsing
+		// arbitrary max data buffer size is 64000
+		if len(data) > 64000 {
+			log.Println("Client buffer exceeded maximum allowed size. Closing connection.")
+			conn.Write([]byte("ERR line too long\n"))
+			return
+		}
+
 		// originally not within a sub loop
 		// consume as many complete commands as are currently buffered within a read cycle
 		for {
-			res := command.Parse(data)
-			if !res.IsComplete {
+			parseRes := command.Parse(data)
+			if !parseRes.IsComplete {
 				break
 			}
 
-			command.Execute(s, string(res.Line[0]), res.Line[1:])
+			cmdRes := command.Execute(s, string(parseRes.Line[0]), parseRes.Line[1:])
+
 			// shifts the data buffer forward
 			// the state
-			data = data[res.BytesConsumed:]
+			data = data[parseRes.BytesConsumed:]
+
+			conn.Write(*cmdRes.Value)
 		}
 	}
 }
