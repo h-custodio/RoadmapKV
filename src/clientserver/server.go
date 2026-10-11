@@ -5,19 +5,26 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 
 	"RoadmapKV/src/command"
 	"RoadmapKV/src/storage"
 )
 
 func CreateServer(s *storage.Store) {
-	// listen for incoming TCP connections on port 8080
-	ln, err := net.Listen("tcp", ":8080")
+	// allows server port to be dynamic
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	// listen for incoming TCP connections
+	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Server is listening on port 8080...")
+	fmt.Println("Server is listening...")
 
 	// keep looping to handle further connections
 	for {

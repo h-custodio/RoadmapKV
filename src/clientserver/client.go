@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 )
 
 func ConnectServer() {
-	conn, err := net.Dial("tcp", "localhost:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	conn, err := net.Dial("tcp", "localhost:"+port)
 	if err != nil {
 		log.Fatal(err)
 	}
