@@ -80,11 +80,12 @@ func handleConnection(conn net.Conn, s *storage.Store) {
 			// the state
 			data = data[parseRes.BytesConsumed:]
 
-			if cmdRes.Value != nil {
-				conn.Write(*cmdRes.Value)
+			if cmdRes.Response != nil {
+				conn.Write(*cmdRes.Response)
 			}
 			if cmdRes.CloseConn {
-				return // Triggers defer conn.Close() and exits the goroutine safely
+				// triggers defer conn.Close() and exits the goroutine safely
+				return
 			}
 		}
 	}
