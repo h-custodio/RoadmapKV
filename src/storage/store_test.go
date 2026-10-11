@@ -114,7 +114,11 @@ func TestStoreDelete(t *testing.T) {
 	s := NewStore()
 
 	s.Set("key", []byte("value"))
-	s.Delete("key")
+
+	// Deleting an existing key should return true
+	if deleted := s.Delete("key"); !deleted {
+		t.Error("Delete(key) = false, want true for existing key")
+	}
 
 	if s.Exists("key") {
 		t.Error("key still exists after Delete")
@@ -124,8 +128,10 @@ func TestStoreDelete(t *testing.T) {
 		t.Errorf("Get(deleted key) = %v, want nil", got)
 	}
 
-	// Deleting a missing key should be harmless.
-	s.Delete("missing")
+	// Deleting a missing key should return false and be harmless
+	if deleted := s.Delete("missing"); deleted {
+		t.Error("Delete(missing) = true, want false for non-existent key")
+	}
 }
 
 func TestStoreIndependentKeys(t *testing.T) {

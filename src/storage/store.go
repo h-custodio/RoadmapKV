@@ -56,13 +56,19 @@ func (s *Store) Get(key string) []byte {
 	return result
 }
 
-func (s *Store) Delete(key string) {
+func (s *Store) Delete(key string) bool {
 	s.checkInitialized()
 
 	s.rwmu.Lock()
 	defer s.rwmu.Unlock()
 
+	_, exists := s.store[key]
+	if !exists {
+		return false
+	}
+
 	delete(s.store, key)
+	return true
 }
 
 func (s *Store) Exists(key string) bool {
