@@ -5,7 +5,7 @@ import (
 )
 
 type CmdResult struct {
-	Response     *[]byte
+	Response     []byte
 	IsAppendable bool
 	CloseConn    bool
 }
@@ -23,7 +23,7 @@ func Execute(s *storage.Store, command string, args [][]byte) CmdResult {
 
 	case "PING":
 		return CmdResult{
-			Response:     "PONG",
+			Response:     []byte("PONG"),
 			IsAppendable: false,
 		}
 
@@ -32,7 +32,7 @@ func Execute(s *storage.Store, command string, args [][]byte) CmdResult {
 
 	default:
 		return CmdResult{
-			Response: "command unknown",
+			Response: []byte("command unknown"),
 		}
 	}
 }
@@ -40,14 +40,14 @@ func Execute(s *storage.Store, command string, args [][]byte) CmdResult {
 func set(s *storage.Store, args [][]byte) CmdResult {
 	if len(args) != 2 {
 		return CmdResult{
-			Response:     "not valid",
+			Response:     []byte("not valid"),
 			IsAppendable: false,
 		}
 	}
 
 	s.Set(string(args[0]), args[1])
 	return CmdResult{
-		Response:     "OK",
+		Response:     []byte("OK"),
 		IsAppendable: true,
 	}
 }
@@ -55,7 +55,7 @@ func set(s *storage.Store, args [][]byte) CmdResult {
 func get(s *storage.Store, key string) CmdResult {
 	value := s.Get(key)
 	return CmdResult{
-		Response:     &value,
+		Response:     value,
 		IsAppendable: false,
 	}
 }
@@ -63,14 +63,14 @@ func get(s *storage.Store, key string) CmdResult {
 func del(s *storage.Store, key string) CmdResult {
 	s.Delete(key)
 	return CmdResult{
-		Response:     "OK",
+		Response:     []byte("OK"),
 		IsAppendable: true,
 	}
 }
 
 func quit() CmdResult {
 	return CmdResult{
-		Response:  "Quiting...",
+		Response:  []byte("Quiting..."),
 		CloseConn: true,
 	}
 }

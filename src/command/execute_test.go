@@ -14,13 +14,13 @@ func newTestStore() *storage.Store {
 func assertResult(
 	t *testing.T,
 	got CmdResult,
-	status string,
+	response []byte,
 	appendable bool,
 ) {
 	t.Helper()
 
-	if got.Status != status {
-		t.Errorf("Status = %q, want %q", got.Status, status)
+	if !bytes.Equal(got.Response, response) {
+		t.Errorf("Response = %q, want %q", got.Response, response)
 	}
 
 	if got.IsAppendable != appendable {
@@ -31,21 +31,13 @@ func assertResult(
 func TestExecutePing(t *testing.T) {
 	got := Execute(newTestStore(), "PING", nil)
 
-	assertResult(t, got, "PONG", false)
-
-	if got.Value != nil {
-		t.Errorf("Value = %v, want nil", got.Value)
-	}
+	assertResult(t, got, []byte("PONG"), false)
 }
 
 func TestExecuteUnknownCommand(t *testing.T) {
 	got := Execute(newTestStore(), "UNKNOWN", nil)
 
-	assertResult(t, got, "command unknown", false)
-
-	if got.Value != nil {
-		t.Errorf("Value = %v, want nil", got.Value)
-	}
+	assertResult(t, got, []byte("command unknown"), false)
 }
 
 func TestExecuteSet(t *testing.T) {
@@ -56,11 +48,7 @@ func TestExecuteSet(t *testing.T) {
 		[]byte("alice"),
 	})
 
-	assertResult(t, got, "OK", true)
-
-	if got.Value != nil {
-		t.Errorf("Value = %v, want nil", got.Value)
-	}
+	assertResult(t, got, []byte("OK"), true)
 
 	if value := s.Get("name"); !bytes.Equal(value, []byte("alice")) {
 		t.Errorf("stored value = %q, want %q", value, []byte("alice"))
@@ -89,11 +77,7 @@ func TestExecuteSetInvalidArguments(t *testing.T) {
 			s := newTestStore()
 
 			got := Execute(s, "SET", tt.args)
-			assertResult(t, got, "not valid", false)
-
-			if got.Value != nil {
-				t.Errorf("Value = %v, want nil", got.Value)
-			}
+			assertResult(t, got, []byte("not valid"), false)
 
 			if len(tt.args) > 0 && s.Exists(string(tt.args[0])) {
 				t.Error("invalid SET modified the store")
@@ -108,29 +92,13 @@ func TestExecuteGet(t *testing.T) {
 
 	got := Execute(s, "GET", [][]byte{[]byte("name")})
 
-	assertResult(t, got, "OK", false)
-
-	if got.Value == nil {
-		t.Fatal("GET returned a nil Value pointer")
-	}
-
-	if !bytes.Equal(*got.Value, []byte("alice")) {
-		t.Errorf("GET value = %q, want %q", *got.Value, []byte("alice"))
-	}
+	assertResult(t, got, []byte("alice"), false)
 }
 
 func TestExecuteGetMissingKey(t *testing.T) {
 	got := Execute(newTestStore(), "GET", [][]byte{[]byte("missing")})
 
-	assertResult(t, got, "OK", false)
-
-	if got.Value == nil {
-		t.Fatal("GET should return a Value pointer, even for a missing key")
-	}
-
-	if *got.Value != nil {
-		t.Errorf("GET missing key = %v, want nil", *got.Value)
-	}
+	assertResult(t, got, nil, false)
 }
 
 func TestExecuteDelete(t *testing.T) {
@@ -139,11 +107,7 @@ func TestExecuteDelete(t *testing.T) {
 
 	got := Execute(s, "DEL", [][]byte{[]byte("name")})
 
-	assertResult(t, got, "OK", true)
-
-	if got.Value != nil {
-		t.Errorf("Value = %v, want nil", got.Value)
-	}
+	assertResult(t, got, []byte("OK"), true)
 
 	if s.Exists("name") {
 		t.Error("key still exists after DEL")
@@ -155,7 +119,7 @@ func TestExecuteDeleteMissingKey(t *testing.T) {
 
 	got := Execute(s, "DEL", [][]byte{[]byte("missing")})
 
-	assertResult(t, got, "OK", true)
+	assertResult(t, got, []byte("OK"), true)
 
 	if s.Exists("missing") {
 		t.Error("DEL created a previously missing key")
@@ -169,27 +133,17 @@ func TestExecuteSetGetDeleteIntegration(t *testing.T) {
 		[]byte("color"),
 		[]byte("blue"),
 	})
-	assertResult(t, setResult, "OK", true)
+	assertResult(t, setResult, []byte("OK"), true)
 
 	getResult := Execute(s, "GET", [][]byte{[]byte("color")})
-	assertResult(t, getResult, "OK", false)
-
-	if getResult.Value == nil {
-		t.Fatal("GET returned a nil Value pointer")
-	}
-	if !bytes.Equal(*getResult.Value, []byte("blue")) {
-		t.Fatalf("GET value = %q, want %q", *getResult.Value, []byte("blue"))
-	}
+	assertResult(t, getResult, []byte("blue"), false)
 
 	delResult := Execute(s, "DEL", [][]byte{[]byte("color")})
-	assertResult(t, delResult, "OK", true)
+	assertResult(t, delResult, []byte("OK"), true)
 
 	getResult = Execute(s, "GET", [][]byte{[]byte("color")})
-	if getResult.Value == nil {
-		t.Fatal("GET returned a nil Value pointer after deletion")
-	}
-	if *getResult.Value != nil {
-		t.Errorf("GET after DEL = %v, want nil", *getResult.Value)
+	if getResult.Response != nil {
+		t.Errorf("GET after DEL = %v, want nil", getResult.Response)
 	}
 }
 
@@ -237,7 +191,7 @@ func TestExecuteGetAndDeleteInvalidArguments(t *testing.T) {
 				t.Fatal("Execute panicked on invalid arguments")
 			}
 
-			assertResult(t, got, "not valid", false)
+			assertResult(t, got, []byte("not valid"), false)
 
 			if value := s.Get("key"); !bytes.Equal(value, []byte("original")) {
 				t.Errorf("invalid command changed stored value to %q", value)
