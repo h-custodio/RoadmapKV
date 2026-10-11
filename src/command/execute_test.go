@@ -13,7 +13,7 @@ func newTestStore() *storage.Store {
 
 func assertResult(
 	t *testing.T,
-	got CmdResultResult,
+	got CmdResult,
 	status string,
 	appendable bool,
 ) {
@@ -220,7 +220,7 @@ func TestExecuteGetAndDeleteInvalidArguments(t *testing.T) {
 
 			// A malformed command should return an error result,
 			// not panic or modify existing data.
-			var got CmdResultResult
+			var got CmdResult
 			panicked := false
 
 			func() {

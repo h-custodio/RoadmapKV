@@ -2,6 +2,7 @@ package command
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -223,5 +224,64 @@ func TestParsePreservesArbitraryValueBytes(t *testing.T) {
 	if got.BytesConsumed != len(input) {
 		t.Errorf("BytesConsumed = %d, want %d",
 			got.BytesConsumed, len(input))
+	}
+}
+
+func BenchmarkParseSimple(b *testing.B) {
+	input := []byte("PING\n")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		Parse(input)
+	}
+}
+
+func BenchmarkParseWithArgs(b *testing.B) {
+	input := []byte("SET name alice\n")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		Parse(input)
+	}
+}
+
+func BenchmarkParseQuoted(b *testing.B) {
+	input := []byte("SET message #hello world#\n")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		Parse(input)
+	}
+}
+
+func BenchmarkParseIncomplete(b *testing.B) {
+	input := []byte("SET key #hello")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		Parse(input)
+	}
+}
+
+// BenchmarkParseDynamic generates dynamic inputs to test parser scaling
+func BenchmarkParseDynamic(b *testing.B) {
+	inputs := make([][]byte, b.N)
+	for i := 0; i < b.N; i++ {
+		inputs[i] = []byte(fmt.Sprintf("SET key-%d #value for key %d#\n", i, i))
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		Parse(inputs[i])
 	}
 }
