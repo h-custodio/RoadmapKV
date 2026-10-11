@@ -43,12 +43,11 @@ func (s *Store) Get(key string) []byte {
 	// garantees to cleanup, even if something goes wrong
 	defer s.rwmu.RUnlock()
 
-	if s.store == nil {
+	value, exists := s.store[key]
+	if !exists {
 		// returns nil if uninitialized instead of panicking
 		return nil
 	}
-
-	value := s.store[key]
 
 	// returns a copy of the value to avoid mutability
 	result := make([]byte, len(value))
