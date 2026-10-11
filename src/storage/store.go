@@ -65,3 +65,13 @@ func (s *Store) Delete(key string) {
 
 	delete(s.store, key)
 }
+
+func (s *Store) Exists(key string) bool {
+	s.checkInitialized()
+
+	s.rwmu.RLock()
+	defer s.rwmu.RUnlock()
+
+	_, exists := s.store[key]
+	return exists
+}
