@@ -154,6 +154,49 @@ func TestParsePartialInputThenComplete(t *testing.T) {
 	}
 }
 
+func TestParsePartialInputAcrossQuote(t *testing.T) {
+	// The first chunk ends while inside a quoted value (inPound = true)
+	partial := []byte("SET key #hello")
+	first := Parse(partial)
+
+	if first.IsComplete {
+		t.Fatal("partial input inside quotes should not be complete")
+	}
+
+	if !first.InPound {
+		t.Error("InPound = false, want true when split inside quotes")
+	}
+
+	if first.BytesConsumed != len(partial) {
+		t.Errorf("BytesConsumed = %d, want %d", first.BytesConsumed, len(partial))
+	}
+
+	// The second chunk completes the quoted value and the command
+	remaining := []byte(" world#\n")
+
+	// As noted in your other tests, your parser re-scans the full accumulated buffer
+	combined := append(append([]byte(nil), partial...), remaining...)
+	got := Parse(combined)
+
+	assertLine(t, got.Line, [][]byte{
+		[]byte("SET"),
+		[]byte("key"),
+		[]byte("hello world"),
+	})
+
+	if !got.IsComplete {
+		t.Error("command should be complete after receiving the closing pound and newline")
+	}
+
+	if got.InPound {
+		t.Error("InPound = true after closing quote, want false")
+	}
+
+	if got.BytesConsumed != len(combined) {
+		t.Errorf("BytesConsumed = %d, want %d", got.BytesConsumed, len(combined))
+	}
+}
+
 func TestParseDoesNotConsumeBytesFromNextCommand(t *testing.T) {
 	data := []byte("PING\nSET key value\n")
 
@@ -171,7 +214,7 @@ func TestParseDoesNotConsumeBytesFromNextCommand(t *testing.T) {
 	}
 }
 
-func TestParseEmptyValue(t *testing.T) {
+func TestParseEmptyQuotedValue(t *testing.T) {
 	got := Parse([]byte("SET key ##\n"))
 
 	assertLine(t, got.Line, [][]byte{

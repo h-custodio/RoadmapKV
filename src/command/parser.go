@@ -32,6 +32,12 @@ func Parse(data []byte) ParserResult {
 			// create a copy of arguments because slice point to underlying array
 			// doing this avoids pointing to overwritten argument
 			argCopy := append([]byte(nil), argument...)
+
+			if argCopy == nil {
+				// ensure it's empty not nil if input is also empty
+				argCopy = []byte{}
+			}
+
 			line = append(line, argCopy)
 			bytesConsumed++
 
