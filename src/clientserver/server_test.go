@@ -26,8 +26,8 @@ func startTestConnection(t *testing.T) net.Conn {
 }
 
 // readResponse reads exactly the bytes expected from one or more commands.
-// Responses currently have no delimiter, so the test must know the expected
-// response length instead of waiting for a newline.
+// Most responses are newline-delimited, but successful GET responses are
+// intentionally still unframed until the GET protocol is updated.
 func readResponse(t *testing.T, conn net.Conn, want string) string {
 	t.Helper()
 
@@ -48,10 +48,10 @@ func TestHandleConnectionSetGetDelete(t *testing.T) {
 		command  string
 		response string
 	}{
-		{command: "SET name alice\n", response: "OK"},
+		{command: "SET name alice\n", response: "OK\n"},
 		{command: "GET name\n", response: "alice"},
-		{command: "DEL name\n", response: "OK"},
-		{command: "GET name\n", response: "not valid"},
+		{command: "DEL name\n", response: "OK\n"},
+		{command: "GET name\n", response: "not valid\n"},
 	} {
 		if _, err := conn.Write([]byte(test.command)); err != nil {
 			t.Fatalf("writing %q: %v", test.command, err)
@@ -72,8 +72,8 @@ func TestHandleConnectionPipelinedCommands(t *testing.T) {
 		t.Fatalf("writing pipelined commands: %v", err)
 	}
 
-	if got := readResponse(t, conn, "OKblue"); got != "OKblue" {
-		t.Errorf("pipelined response = %q, want %q", got, "OKblue")
+	if got := readResponse(t, conn, "OK\nblue"); got != "OK\nblue" {
+		t.Errorf("pipelined response = %q, want %q", got, "OK\nblue")
 	}
 }
 
@@ -97,8 +97,8 @@ func TestHandleConnectionCommandSplitAcrossWrites(t *testing.T) {
 		t.Fatalf("writing final command fragment: %v", err)
 	}
 
-	if got := readResponse(t, conn, "OK"); got != "OK" {
-		t.Errorf("split-command response = %q, want %q", got, "OK")
+	if got := readResponse(t, conn, "OK\n"); got != "OK\n" {
+		t.Errorf("split-command response = %q, want %q", got, "OK\n")
 	}
 }
 
@@ -109,8 +109,8 @@ func TestHandleConnectionQuitClosesConnection(t *testing.T) {
 		t.Fatalf("writing QUIT: %v", err)
 	}
 
-	if got := readResponse(t, conn, "Quitting..."); got != "Quitting..." {
-		t.Errorf("QUIT response = %q, want %q", got, "Quitting...")
+	if got := readResponse(t, conn, "Quitting...\n"); got != "Quitting...\n" {
+		t.Errorf("QUIT response = %q, want %q", got, "Quitting...\n")
 	}
 
 	// QUIT should end the handler after its response, so the peer observes EOF.

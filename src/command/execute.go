@@ -14,7 +14,7 @@ type CmdResult struct {
 func Execute(s *storage.Store, args [][]byte) CmdResult {
 	if len(args) == 0 {
 		return CmdResult{
-			Response: []byte("empty command"),
+			Response: []byte("empty command\n"),
 		}
 	}
 
@@ -41,7 +41,7 @@ func Execute(s *storage.Store, args [][]byte) CmdResult {
 
 	default:
 		return CmdResult{
-			Response: []byte("command unknown"),
+			Response: []byte("command unknown\n"),
 		}
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"RoadmapKV/src/storage"
 )
 
-func CreateServer(s *storage.Store) {
+func CreateServer(s *storage.Store) error {
 	// allows server port to be dynamic
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -21,7 +21,8 @@ func CreateServer(s *storage.Store) {
 	// listen for incoming TCP connections
 	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return err
 	}
 
 	fmt.Println("Server is listening...")

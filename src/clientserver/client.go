@@ -15,12 +15,13 @@ func ConnectServer() {
 
 	conn, err := net.Dial("tcp", "localhost:"+port)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return
 	}
 
 	defer conn.Close()
 
-	message := "Filler"
+	message := "PING\n"
 	_, err = conn.Write([]byte(message))
 	if err != nil {
 		log.Println("Write error:", err)
@@ -31,7 +32,8 @@ func ConnectServer() {
 	buffer := make([]byte, 1024)
 	incomingSize, err := conn.Read(buffer)
 	if err != nil {
-		log.Fatalf("Failed to write: %v", err)
+		log.Printf("Read write: %v", err)
+		return
 	}
 
 	fmt.Printf("SERVER RESPONSE: %s", string(buffer[:incomingSize]))
