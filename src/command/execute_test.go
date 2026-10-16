@@ -31,13 +31,13 @@ func assertResult(
 func TestExecutePing(t *testing.T) {
 	got := Execute(newTestStore(), [][]byte{[]byte("PING")})
 
-	assertResult(t, got, []byte("PONG\n"), false)
+	assertResult(t, got, []byte("PONG"), false)
 }
 
 func TestExecuteUnknownCommand(t *testing.T) {
 	got := Execute(newTestStore(), [][]byte{[]byte("UNKNOWN")})
 
-	assertResult(t, got, []byte("command unknown\n"), false)
+	assertResult(t, got, []byte("command unknown"), false)
 }
 
 func TestExecuteSet(t *testing.T) {
@@ -49,7 +49,7 @@ func TestExecuteSet(t *testing.T) {
 		[]byte("alice"),
 	})
 
-	assertResult(t, got, []byte("OK\n"), true)
+	assertResult(t, got, []byte("OK"), true)
 
 	if value := s.Get("name"); !bytes.Equal(value, []byte("alice")) {
 		t.Errorf("stored value = %q, want %q", value, []byte("alice"))
@@ -80,9 +80,9 @@ func TestExecuteSetInvalidArguments(t *testing.T) {
 
 			got := Execute(s, tt.args)
 			// Empty args returns "empty command", malformed SET returns "not valid".
-			expectedResp := []byte("not valid\n")
+			expectedResp := []byte("not valid")
 			if len(tt.args) == 0 {
-				expectedResp = []byte("empty command\n")
+				expectedResp = []byte("empty command")
 			}
 			assertResult(t, got, expectedResp, false)
 
@@ -106,7 +106,7 @@ func TestExecuteGetMissingKey(t *testing.T) {
 	got := Execute(newTestStore(), [][]byte{[]byte("GET"), []byte("missing")})
 
 	// Updated implementation returns "not valid" for missing keys on GET
-	assertResult(t, got, []byte("not valid\n"), false)
+	assertResult(t, got, []byte("not valid"), false)
 }
 
 func TestExecuteDelete(t *testing.T) {
@@ -115,7 +115,7 @@ func TestExecuteDelete(t *testing.T) {
 
 	got := Execute(s, [][]byte{[]byte("DEL"), []byte("name")})
 
-	assertResult(t, got, []byte("OK\n"), true)
+	assertResult(t, got, []byte("OK"), true)
 
 	if s.Exists("name") {
 		t.Error("key still exists after DEL")
@@ -128,7 +128,7 @@ func TestExecuteDeleteMissingKey(t *testing.T) {
 	got := Execute(s, [][]byte{[]byte("DEL"), []byte("missing")})
 
 	// Updated implementation returns "not valid" if delete fails (missing key)
-	assertResult(t, got, []byte("not valid\n"), false)
+	assertResult(t, got, []byte("not valid"), false)
 }
 
 func TestExecuteSetGetDeleteIntegration(t *testing.T) {
@@ -139,16 +139,16 @@ func TestExecuteSetGetDeleteIntegration(t *testing.T) {
 		[]byte("color"),
 		[]byte("blue"),
 	})
-	assertResult(t, setResult, []byte("OK\n"), true)
+	assertResult(t, setResult, []byte("OK"), true)
 
 	getResult := Execute(s, [][]byte{[]byte("GET"), []byte("color")})
 	assertResult(t, getResult, []byte("blue"), false)
 
 	delResult := Execute(s, [][]byte{[]byte("DEL"), []byte("color")})
-	assertResult(t, delResult, []byte("OK\n"), true)
+	assertResult(t, delResult, []byte("OK"), true)
 
 	getResult = Execute(s, [][]byte{[]byte("GET"), []byte("color")})
-	assertResult(t, getResult, []byte("not valid\n"), false)
+	assertResult(t, getResult, []byte("not valid"), false)
 }
 
 func TestExecuteGetAndDeleteInvalidArguments(t *testing.T) {
@@ -190,7 +190,7 @@ func TestExecuteGetAndDeleteInvalidArguments(t *testing.T) {
 				t.Fatal("Execute panicked on invalid arguments")
 			}
 
-			assertResult(t, got, []byte("not valid\n"), false)
+			assertResult(t, got, []byte("not valid"), false)
 
 			if value := s.Get("key"); !bytes.Equal(value, []byte("original")) {
 				t.Errorf("invalid command changed stored value to %q", value)

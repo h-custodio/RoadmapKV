@@ -9,14 +9,30 @@ import (
 	"RoadmapKV/src/storage"
 )
 
-// startTestConnection runs the same connection handler used by the TCP server,
-// but replaces a real socket with an in-memory connection pair. This keeps the
-// test focused on the protocol while avoiding a fixed port and a forever-running
-// listener.
+// startTestConnection runs the same connection handler used by the TCP server
+// on an ephemeral loopback port.
 func startTestConnection(t *testing.T) net.Conn {
 	t.Helper()
 
-	serverConn, clientConn := net.Pipe()
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("starting test listener: %v", err)
+	}
+
+	clientConn, err := net.Dial("tcp", listener.Addr().String())
+	if err != nil {
+		_ = listener.Close()
+		t.Fatalf("connecting to test listener: %v", err)
+	}
+
+	serverConn, err := listener.Accept()
+	if err != nil {
+		_ = clientConn.Close()
+		_ = listener.Close()
+		t.Fatalf("accepting test connection: %v", err)
+	}
+
+	_ = listener.Close()
 	t.Cleanup(func() {
 		_ = clientConn.Close()
 	})
@@ -26,8 +42,7 @@ func startTestConnection(t *testing.T) net.Conn {
 }
 
 // readResponse reads exactly the bytes expected from one or more commands.
-// Most responses are newline-delimited, but successful GET responses are
-// intentionally still unframed until the GET protocol is updated.
+// Responses are newline-delimited.
 func readResponse(t *testing.T, conn net.Conn, want string) string {
 	t.Helper()
 
@@ -49,7 +64,7 @@ func TestHandleConnectionSetGetDelete(t *testing.T) {
 		response string
 	}{
 		{command: "SET name alice\n", response: "OK\n"},
-		{command: "GET name\n", response: "alice"},
+		{command: "GET name\n", response: "alice\n"},
 		{command: "DEL name\n", response: "OK\n"},
 		{command: "GET name\n", response: "not valid\n"},
 	} {

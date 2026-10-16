@@ -8,5 +8,8 @@ import (
 func main() {
 	// NewStore() returns pointer to the store
 	s := storage.NewStore()
-	clientserver.CreateServer(s)
+	err := clientserver.CreateServer(s)
+	if err != nil {
+
+	}
 }

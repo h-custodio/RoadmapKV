@@ -83,13 +83,14 @@ func handleConnection(conn net.Conn, s *storage.Store) {
 
 			cmdRes := command.Execute(s, parseRes.Line)
 
-			// shifts the data buffer forward
-			// the state
+			// shifts the data, the state, buffer forward
 			data = data[parseRes.BytesConsumed:]
 
 			if cmdRes.Response != nil {
-				conn.Write(cmdRes.Response)
+				message := append(cmdRes.Response, '\n')
+				conn.Write(message)
 			}
+
 			if cmdRes.CloseConn {
 				// triggers defer conn.Close() and exits the goroutine safely
 				return

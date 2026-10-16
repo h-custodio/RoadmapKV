@@ -14,7 +14,7 @@ type CmdResult struct {
 func Execute(s *storage.Store, args [][]byte) CmdResult {
 	if len(args) == 0 {
 		return CmdResult{
-			Response: []byte("empty command\n"),
+			Response: []byte("empty command"),
 		}
 	}
 
@@ -32,7 +32,7 @@ func Execute(s *storage.Store, args [][]byte) CmdResult {
 
 	case "PING":
 		return CmdResult{
-			Response:     []byte("PONG\n"),
+			Response:     []byte("PONG"),
 			IsAppendable: false,
 		}
 
@@ -41,7 +41,7 @@ func Execute(s *storage.Store, args [][]byte) CmdResult {
 
 	default:
 		return CmdResult{
-			Response: []byte("command unknown\n"),
+			Response: []byte("command unknown"),
 		}
 	}
 }
@@ -49,7 +49,7 @@ func Execute(s *storage.Store, args [][]byte) CmdResult {
 func set(s *storage.Store, args [][]byte) CmdResult {
 	if len(args) != 3 {
 		return CmdResult{
-			Response:     []byte("not valid\n"),
+			Response:     []byte("not valid"),
 			IsAppendable: false,
 		}
 	}
@@ -57,7 +57,7 @@ func set(s *storage.Store, args [][]byte) CmdResult {
 	// args[0] is set, args[1] is key, args[2] is value
 	s.Set(string(args[1]), args[2])
 	return CmdResult{
-		Response:     []byte("OK\n"),
+		Response:     []byte("OK"),
 		IsAppendable: true,
 	}
 }
@@ -65,7 +65,7 @@ func set(s *storage.Store, args [][]byte) CmdResult {
 func get(s *storage.Store, args [][]byte) CmdResult {
 	if len(args) != 2 {
 		return CmdResult{
-			Response:     []byte("not valid\n"),
+			Response:     []byte("not valid"),
 			IsAppendable: false,
 		}
 	}
@@ -75,7 +75,7 @@ func get(s *storage.Store, args [][]byte) CmdResult {
 
 	if value == nil {
 		return CmdResult{
-			Response:     []byte("not valid\n"),
+			Response:     []byte("not valid"),
 			IsAppendable: false,
 		}
 	}
@@ -89,7 +89,7 @@ func get(s *storage.Store, args [][]byte) CmdResult {
 func del(s *storage.Store, args [][]byte) CmdResult {
 	if len(args) != 2 {
 		return CmdResult{
-			Response:     []byte("not valid\n"),
+			Response:     []byte("not valid"),
 			IsAppendable: false,
 		}
 	}
@@ -99,20 +99,20 @@ func del(s *storage.Store, args [][]byte) CmdResult {
 
 	if !success {
 		return CmdResult{
-			Response:     []byte("not valid\n"),
+			Response:     []byte("not valid"),
 			IsAppendable: false,
 		}
 	}
 
 	return CmdResult{
-		Response:     []byte("OK\n"),
+		Response:     []byte("OK"),
 		IsAppendable: true,
 	}
 }
 
 func quit() CmdResult {
 	return CmdResult{
-		Response:  []byte("Quitting...\n"),
+		Response:  []byte("Quitting..."),
 		CloseConn: true,
 	}
 }
