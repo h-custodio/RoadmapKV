@@ -1,13 +1,20 @@
 package clientserver
 
 import (
-	"fmt"
-	"log"
+	"bufio"
+	"errors"
+	"io"
 	"net"
 	"os"
+	"strings"
 )
 
-func ConnectServer() {
+type Client struct {
+	conn   net.Conn
+	reader *bufio.Reader
+}
+
+func ConnectServer() (*Client, error) {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -15,30 +22,57 @@ func ConnectServer() {
 
 	conn, err := net.Dial("tcp", "localhost:"+port)
 	if err != nil {
-		log.Print(err)
-		return
+		return nil, err
 	}
 
-	defer conn.Close()
-
-	message := "PING\n"
-	_, err = conn.Write([]byte(message))
-	if err != nil {
-		log.Println("Write error:", err)
-		return
-	}
-
-	// read the server's response
-	buffer := make([]byte, 1024)
-	incomingSize, err := conn.Read(buffer)
-	if err != nil {
-		log.Printf("Read write: %v", err)
-		return
-	}
-
-	fmt.Printf("SERVER RESPONSE: %s", string(buffer[:incomingSize]))
+	return &Client{
+		conn:   conn,
+		reader: bufio.NewReader(conn),
+	}, nil
 }
 
-func handleClientConnection(conn net.Conn) {
+func (c *Client) send(command string) error {
+	if c == nil || c.conn == nil {
+		return errors.New("client is not connected")
+	}
 
+	if !strings.HasSuffix(command, "\n") {
+		command += "\n"
+	}
+
+	data := []byte(command)
+
+	for len(data) > 0 {
+		n, err := c.conn.Write(data)
+		if err != nil {
+			return err
+		}
+		if n == 0 {
+			return io.ErrShortWrite
+		}
+		data = data[n:]
+	}
+
+	return nil
+}
+
+func (c *Client) receive() (string, error) {
+	response, err := c.reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+
+	return response, nil
+}
+
+func (c *Client) Execute(command string) (string, error) {
+	if err := c.send(command); err != nil {
+		return "", err
+	}
+
+	return c.receive()
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
 }
