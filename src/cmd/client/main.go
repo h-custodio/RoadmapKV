@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -39,10 +40,14 @@ func main() {
 
 		response, err := client.Execute(input)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to send command:", err)
+			fmt.Fprintln(os.Stderr, "Failed to execute command:", err)
 			continue
 		}
 
 		fmt.Print(response)
+
+		if strings.EqualFold(strings.TrimSpace(input), "QUIT") {
+			break
+		}
 	}
 }

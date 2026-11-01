@@ -57,6 +57,10 @@ func (c *Client) send(command string) error {
 }
 
 func (c *Client) receive() (string, error) {
+	if c == nil || c.reader == nil {
+		return "", errors.New("client is not connected")
+	}
+
 	response, err := c.reader.ReadString('\n')
 	if err != nil {
 		return "", err
@@ -74,5 +78,9 @@ func (c *Client) Execute(command string) (string, error) {
 }
 
 func (c *Client) Close() error {
+	if c == nil || c.conn == nil {
+		return nil
+	}
+
 	return c.conn.Close()
 }
